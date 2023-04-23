@@ -42,16 +42,13 @@ class ThreeCropTransform:
 
 
 class SeqSampler(Sampler):
-    def __init__(self, dataset_name, dataset, blend_ratio, n_concurrent_classes,
-                 imbalanced, train_samples_ratio):
+    def __init__(self, dataset, blend_ratio, n_concurrent_classes,
+                 train_samples_per_cls):
         """data_source is a Subset"""
-        self.dataset_name = dataset_name
         self.num_samples = len(dataset)
         self.blend_ratio = blend_ratio
         self.n_concurrent_classes = n_concurrent_classes
-        self.imbalanced = imbalanced
-        self.train_samples_ratio = train_samples_ratio
-        self.total_sample_num = int(self.num_samples * train_samples_ratio)
+        self.train_samples_per_cls = train_samples_per_cls
 
         # Configure the correct train_subset and val_subset
         if torch.is_tensor(dataset.targets):
@@ -67,6 +64,7 @@ class SeqSampler(Sampler):
         cmin = []
         cmax = []
         for i in range(int(self.n_classes / self.n_concurrent_classes)):
+            for _ in range(self.n_concurrent_classes):
                 cmin.append(i * self.n_concurrent_classes)
                 cmax.append((i + 1) * self.n_concurrent_classes)
         print('cmin', cmin)
@@ -77,19 +75,24 @@ class SeqSampler(Sampler):
 
         # Configure sequential class-incremental input
         sample_idx = []
-        for c in range(int(self.n_classes / self.n_concurrent_classes)):
+        for c in self.classes:
             filtered_train_ind = filter_fn(self.labels)
             filtered_ind = np.arange(self.labels.shape[0])[filtered_train_ind]
             np.random.shuffle(filtered_ind)
 
-            # The sample num should be scaled according to train_samples_ratio
-            cls_sample_num = int(filtered_ind.size * self.train_samples_ratio)
+            cls_idx = self.classes.index(c)
+            if len(self.train_samples_per_cls) == 1:  # The same length for all classes
+                sample_num = self.train_samples_per_cls[0]
+            else:  # Imbalanced class
+                assert len(self.train_samples_per_cls) == len(self.classes), \
+                    'Length of classes {} does not match length of train ' \
+                    'samples per class {}'.format(len(self.classes),
+                                                  len(self.train_samples_per_cls))
+                sample_num = self.train_samples_per_cls[cls_idx]
 
-            if self.imbalanced:  # Imbalanced class
-                cls_sample_num = int(cls_sample_num * np.random.uniform(low=0.5, high=1.0))
-
-            sample_idx.append(filtered_ind.tolist()[:cls_sample_num])
-            print('Class [{}, {}): {} samples'.format(cmin[c], cmax[c], cls_sample_num))
+            sample_idx.append(filtered_ind.tolist()[:sample_num])
+            print('Class [{}, {}): {} samples'.format(cmin[cls_idx], cmax[cls_idx],
+                                                      sample_num))
 
         # Configure blending class
         if self.blend_ratio > 0.0:
@@ -115,14 +118,13 @@ class SeqSampler(Sampler):
         final_idx = []
         for sample in sample_idx:
             final_idx += sample
-
-        # Update total sample num
-        self.total_sample_num = len(final_idx)
-
         return iter(final_idx)
 
     def __len__(self):
-        return self.total_sample_num
+        if len(self.train_samples_per_cls) == 1:
+            return self.n_classes * self.train_samples_per_cls[0]
+        else:
+            return sum(self.train_samples_per_cls)
 
 
 def set_loader(opt):
@@ -185,7 +187,7 @@ def set_loader(opt):
                                          download=True,
                                          train=True)
         knn_train_dataset = datasets.CIFAR10(root=opt.data_folder,
-                                             train=False,
+                                             train=True,
                                              transform=val_transform)
         val_dataset = datasets.CIFAR10(root=opt.data_folder,
                                        train=False,
@@ -218,7 +220,7 @@ def set_loader(opt):
                                           download=True,
                                           train=True)
         knn_train_dataset = datasets.CIFAR100(root=opt.data_folder,
-                                              train=False,
+                                              train=True,
                                               transform=val_transform)
         val_dataset = datasets.CIFAR100(root=opt.data_folder,
                                         train=False,
@@ -255,7 +257,7 @@ def set_loader(opt):
                                      train=True,
                                      download=True)
         knn_train_dataset = TinyImagenet(root=opt.data_folder + 'TINYIMG',
-                                         train=False,
+                                         train=True,
                                          transform=val_transform)
         val_dataset = TinyImagenet(root=opt.data_folder + 'TINYIMG',
                                    train=False,
@@ -283,7 +285,7 @@ def set_loader(opt):
                                        download=True,
                                        train=True)
         knn_train_dataset = datasets.MNIST(root=opt.data_folder,
-                                           train=False,
+                                           train=True,
                                            transform=val_transform)
         val_dataset = datasets.MNIST(root=opt.data_folder,
                                      train=False,
@@ -299,59 +301,51 @@ def set_loader(opt):
     else:
         raise ValueError(opt.dataset)
 
+    # Configure the a smaller subset as validation dataset
+    if torch.is_tensor(train_dataset.targets):
+        labels = train_dataset.targets.detach().cpu().numpy()
+    else:  # targets in cifar10 and cifar100 is a list
+        labels = np.array(train_dataset.targets)
+    num_labels = len(list(set(labels)))
+
     # Create training loader
     if opt.training_data_type == 'iid':
-
-        # Select a given ratio of training samples
-        train_subset_len = int(len(train_dataset) * opt.train_samples_ratio)
-
+        train_subset_len = num_labels * opt.train_samples_per_cls[0]
         train_subset, _ = torch.utils.data.random_split(dataset=train_dataset,
                                                         lengths=[train_subset_len,
                                                                  len(train_dataset) - train_subset_len])
         train_loader = torch.utils.data.DataLoader(
             train_subset, batch_size=opt.batch_size, shuffle=True,
             num_workers=opt.num_workers, pin_memory=True, sampler=None)
-
-    else:  # sequential: class incremental or instance incremental
-        train_sampler = SeqSampler(opt.dataset,
-                                   train_dataset,
-                                   opt.blend_ratio,
+    else:  # sequential
+        train_sampler = SeqSampler(train_dataset, opt.blend_ratio,
                                    opt.n_concurrent_classes,
-                                   opt.imbalanced,
-                                   opt.train_samples_ratio)
+                                   opt.train_samples_per_cls)
         train_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=opt.batch_size, shuffle=False,
             num_workers=opt.num_workers, pin_memory=True, sampler=train_sampler)
 
-    # Create validation loader, select a given ratio of testing samples
-    test_subset_len = int(len(val_dataset) * opt.test_samples_ratio)
-    val_subset_len = int(len(val_dataset) * opt.val_samples_ratio)
-    remain_len = len(val_dataset) - test_subset_len - val_subset_len
-    test_subset, val_subset, _ = torch.utils.data.random_split(dataset=val_dataset,
-                                                  lengths=[test_subset_len,
-                                                           val_subset_len,
-                                                           remain_len])
-
-    test_loader = torch.utils.data.DataLoader(
-        test_subset, batch_size=opt.val_batch_size, shuffle=False,
-        num_workers=0, pin_memory=True)
+    # Create validation loader
+    val_subset_len = num_labels * opt.test_samples_per_cls
+    val_subset, _ = torch.utils.data.random_split(dataset=val_dataset,
+                                                  lengths=[val_subset_len, len(val_dataset) - val_subset_len])
     val_loader = torch.utils.data.DataLoader(
-        val_subset, batch_size=opt.val_batch_size, shuffle=False,
+        val_subset, batch_size=opt.val_batch_size, shuffle=True,
         num_workers=0, pin_memory=True)
 
-    # Select a given ratio of knn training samples
-    knn_subset_len = int(len(knn_train_dataset) * opt.knn_samples_ratio)
-
-    knn_subset, _ = torch.utils.data.random_split(dataset=knn_train_dataset,
-                                                  lengths=[knn_subset_len,
-                                                           len(knn_train_dataset) - knn_subset_len])
-    knn_train_loader = torch.utils.data.DataLoader(
-        knn_subset, batch_size=opt.val_batch_size, shuffle=True,
-        num_workers=0, pin_memory=True)
+    # Create kNN loader
+    if opt.knn_samples > 0:
+        knn_subset, _ = torch.utils.data.random_split(dataset=knn_train_dataset,
+                                                      lengths=[opt.knn_samples, len(knn_train_dataset) - opt.knn_samples])
+        knn_train_loader = torch.utils.data.DataLoader(knn_subset,
+                                                      batch_size=opt.val_batch_size,
+                                                      shuffle=False,
+                                                      num_workers=0, pin_memory=True)
+    else:
+        knn_train_loader = None
 
     print('Training samples: ', len(train_loader) * opt.batch_size)
-    print('Testing samples: ', len(test_loader) * opt.val_batch_size)
-    print('Validation samples: ', len(val_loader) * opt.val_batch_size)
+    print('Testing samples: ', len(val_loader) * opt.val_batch_size)
     print('kNN training samples: ', len(knn_train_loader) * opt.val_batch_size)
 
-    return train_loader, test_loader, val_loader, knn_train_loader, train_transform_runtime
+    return train_loader, val_loader, knn_train_loader, train_transform_runtime

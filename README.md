@@ -14,7 +14,7 @@ Xiaofan Yu, Yunhui Guo, Sicun Gao, Tajana Rosing. "SCALE: Online Self-Supervised
 
 ## Prerequisites
 
-In each folder, set up the environment with `pip3 install -r requirements.txt`. We test `OnlineContrast` and `UCL` with Python3.8, while `STAM` is tested with Python3.6.
+In each folder, set up the environment with `pip3 install -r requirements.txt`. We test `OnlineContrast` and `UCL` with Python3.8, while `STAM` is tested with Python3.6. Our machine uses CUDA 11.7 and a NVIDIA RTX 3080 Ti GPU.
 
 ### Dataset Preparation
 
@@ -33,25 +33,18 @@ We list the commands to fire our method and each baseline in the following lines
 
 ### OnlineContrast
 
-To run our method SCALE:
+We adapt the code from the [SupContrast](https://github.com/HobbitLong/SupContrast) repo. To run our method SCALE:
 
 ```bash
-cd OnlineContrast
-bash ./run-scll.sh unsupcon <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
+cd OnlineContrast/scripts
+bash ./run-scale.sh scale <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
 ```
 
 * We test with five types of data streams as discussed in the paper: (1) **iid**, (2) sequential classes (**seq**), (3) sequential classes with blurred boundaries (**seq-bl**), (4) sequential classes with imbalance lengths (**seq-**
   **im**), and (5) sequential classes with concurrent classes (**seq-cc**). More details about data stream configuration are explained later.
 * For all implementations, the last argument of `trial#` (e.g., `0,1,2`) determines the random seed configuration. Hence using the same `trial#` produces the same random selection.
 
-To run SimCLR and CaSSLe:
-
-```bash
-cd OnlineContrast
-bash ./run-baselines.sh <simclr/cassle> <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
-```
-
-The data streams and model configuration for SCALE, SimCLR and CaSSLe are in `OnlineContrast/set_util.py`. Evaluation functions for all methods are in `./eval_util.py`.
+You can run `run-<simclr/supcon/co2l/cassle>.sh` to run the corresponding baseline with similar argument format.
 
 ### UCL
 
@@ -61,7 +54,7 @@ We run LUMP (`mixup` in argument), PNN, SI and DER as baselines to compare:
 
 ```bash
 cd UCL
-bash ./run-baselines.sh <mixup/pnn/si/der> supcon <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
+bash ./run-baseline.sh <mixup/pnn/si/der> supcon <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
 ```
 
 The data streams and model configuration for LUMP, PNN, SI, DER are in `UCL/set_util.py`. In our setup, we fire the experiments with `UCL/test_all.sh`.
@@ -121,7 +114,7 @@ The single-pass and non-iid data streams are the key motivation of the paper. As
 
   We consider the case that two classes are reveled concurrently.
 
-More implementation details can be found in `./OnlineContrast/set_util.py` in the `SeqSampler` class.
+More implementation details can be found in `./set_util.py` in the `SeqSampler` class.
 
 ## Citation
 

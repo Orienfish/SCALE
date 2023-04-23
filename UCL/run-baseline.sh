@@ -1,12 +1,11 @@
 # Usage:
 #   Run UCL on various dataset under four streaming settings: iid, seq, seq-bl, seq-cc, e.g.,
-#     ./run-baseline.sh mixup supcon mnist iid trial# ckpt
+#     ./run-baseline.sh mixup simclr mnist iid trial#
 #   Method choices: mixup, pnn, si, der
-#   Model name choices: supcon, simsiam, barlowtwins
+#   Model name choices: simclr, simsiam, barlowtwins, byol, vicreg
 #   Dataset choices: mnist, svhn, cifar10, cifar100, tinyimagenet
 #   Datatype choices: iid, seq, seq-bl, seq-cc, seq-im
 #   Trial #: the number of trial
-#   ckpt: path to the stored model
 
 model=resnet18
 lr=0.03;
@@ -45,7 +44,7 @@ if [ "$3" = "mnist" ] || [ "$3" = "svhn" ]; then
   fi
 
   if [ "$4" = "seq-im" ]; then
-    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone cnn --training_data_type class_iid --imbalanced \
+    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone cnn --training_data_type class_iid \
       --batch_size 256 --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 20 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
       --train_samples_per_cls 2048 4096 2048 4096 2048 2048 4096 2048 2048 4096 \
@@ -88,7 +87,7 @@ if [ "$3" = "cifar10" ] ; then
   fi
 
   if [ "$4" = "seq-im" ]; then
-    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid --imbalanced \
+    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid \
       --batch_size 128 --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
       --train_samples_per_cls 2048 4096 2048 4096 2048 2048 4096 2048 2048 4096 \
@@ -131,7 +130,7 @@ if [ "$3" = "cifar100" ] ; then
   fi
 
   if [ "$4" = "seq-im" ]; then
-    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid --imbalanced \
+    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid \
       --batch_size 128 --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
       --train_samples_per_cls 1280 2560 2560 2560 1280 2560 2560 2560 2560 1280 2560 2560 2560 2560 1280 2560 2560 2560 2560 1280 \
@@ -174,7 +173,7 @@ if [ "$3" = "tinyimagenet" ] ; then
   fi
 
   if [ "$4" = "seq-im" ]; then
-    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid --imbalanced \
+    python main.py --method "$1" --model_name "$2" --dataset "$3" --backbone $model --training_data_type class_iid \
       --batch_size 128 --val_batch_size 64 --num_workers 8 --steps_per_batch_stream 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
       --train_samples_per_cls 250 500 500 500 250 500 500 500 500 500 \

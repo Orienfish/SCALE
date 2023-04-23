@@ -44,6 +44,7 @@ class Memory(object):
         """
         self.max_classes = opt.mem_max_classes
         self.max_size = opt.mem_size
+        self.size_per_class = self.max_size // self.max_classes
         self.sample_type = opt.mem_update_type
         self.cluster_type = opt.mem_cluster_type
         self.max_new_ratio = opt.mem_max_new_ratio

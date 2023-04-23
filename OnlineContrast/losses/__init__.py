@@ -1,11 +1,6 @@
 import torch
 from .supcon import SupConLoss, IRDLoss
 from .simclr import SimCLRLoss
-from .cka import CKALoss
-from .barlowtwins import BarlowTwinsLoss
-from .byol import BYOL
-from .vicreg import VICRegLoss
-from .simsiam import SimSiamLoss
 
 def get_loss(opt):
     if opt.criterion == 'simclr':

@@ -1,29 +1,14 @@
-# import os
 import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
-# import torchvision
-# import numpy as np
 import random
-from torch.utils.data import TensorDataset, DataLoader
 import tensorboard_logger as tb_logger
-# from tqdm import tqdm
 from arguments import get_args
 # from augmentations import get_aug
 from models import get_model
-from tools import AverageMeter, knn_monitor, Logger, file_exist_check
-# from datasets import get_dataset
-# from datetime import datetime
 from utils.loggers import *
-# from utils.metrics import mask_classes
-# from utils.loggers import CsvLogger
-# from datasets.utils.continual_dataset import ContinualDataset
-# from models.utils.continual_model import ContinualModel
-# from typing import Tuple
 
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
-from eval_utils import knn_eval, save_model, plot_mem, STU_NAME, TEST_MODE, VAL_MODE
+from eval_utils import cluster_eval, knn_eval, save_model, plot_mem
 from data_utils import set_loader
 
 VAL_CNT = 10  # Number of validations to allow during training
@@ -63,11 +48,11 @@ def validate(val_loader, knn_train_loader, model, optimizer_stream, opt, mem,
     test_labels = np.array(test_labels).astype(int)
 
     # Unsupervised clustering
-    #cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch, logger)
+    cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch, logger)
 
     # kNN classification
     knn_eval(test_embeddings, test_labels, knn_embeddings, knn_labels,
-             opt, mem, cur_step, epoch, logger, STU_NAME, TEST_MODE)
+             opt, mem, cur_step, epoch, logger)
     #knn_task_eval(test_embeddings, test_labels, knn_embeddings, knn_labels,
     #              opt, mem, cur_step, epoch, logger, task_list)
 
@@ -92,7 +77,7 @@ def main(device, args):
 
     # define loader
     # build data loader
-    train_loader, test_loader, val_loader, knntrain_loader, train_transform = set_loader(args)
+    train_loader, test_loader, knntrain_loader, train_transform = set_loader(args)
 
     # define model
     model = get_model(args, device, len(train_loader), train_transform)
@@ -106,7 +91,7 @@ def main(device, args):
 
     # Set task list
     all_labels = []
-    for idx, (images, labels) in enumerate(val_loader):
+    for idx, (images, labels) in enumerate(test_loader):
         all_labels += labels.detach().tolist()
     all_labels = np.sort(np.unique(np.array(all_labels).astype(int)))
     task_list = np.reshape(all_labels, (-1, all_labels.size)).tolist()

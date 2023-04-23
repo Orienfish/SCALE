@@ -50,7 +50,7 @@ if [ $2 = "mnist" ] || [ $2 = "svhn" ]; then
   fi
 
   if [ $3 = "seq-im" ]; then
-    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model cnn --training_data_type class_iid --imbalanced \
+    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model cnn --training_data_type class_iid \
         --batch_size 256 --mem_samples $mem_samples --mem_size $mem_size \
         --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 20 --epochs 1 \
         --learning_rate_stream $lr --temp_cont 0.1 \
@@ -94,7 +94,7 @@ if [ $2 = "cifar10" ] ; then
   fi
 
   if [ $3 = "seq-im" ]; then
-    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid --imbalanced \
+    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid \
       --batch_size 128 --mem_samples $mem_samples --mem_size $mem_size \
       --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 10 --print_freq 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
@@ -137,7 +137,7 @@ if [ $2 = "cifar100" ] ; then
   fi
 
   if [ $3 = "seq-im" ]; then
-    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid --imbalanced \
+    python main_supcon.py --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid \
       --batch_size 128 --mem_samples $mem_samples --mem_size $mem_size \
       --val_batch_size 128 --num_workers 8 --steps_per_batch_stream 10 --print_freq 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \
@@ -181,7 +181,7 @@ if [ $2 = "tinyimagenet" ] ; then
   fi
 
   if [ $3 = "seq-im" ]; then
-    python main_supcon.py --size $size --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid --imbalanced \
+    python main_supcon.py --size $size --lifelong_method cassle --criterion $1 --dataset $2 --model $model --training_data_type class_iid \
       --batch_size 128 --mem_samples $mem_samples --mem_size $mem_size \
       --val_batch_size 64 --num_workers 8 --steps_per_batch_stream 10 --print_freq 10 --epochs 1 \
       --learning_rate_stream $lr --temp_cont 0.1 \

@@ -173,10 +173,15 @@ def get_args():
         'num_workers': args.num_workers,
     }
 
-    args.model_dir = '{}_{}_{}_{}_{}_{}_{}_{}_r{}_{}_{}_lrs_{}_bsz_{}_steps_{}_epoch_{}_trial_{}'.format(
+    if len(args.train_samples_per_cls) == 1:
+        im_ind = args.train_samples_per_cls[0]
+    else:
+        im_ind = 'im'
+
+    args.model_dir = '{}_{}_{}_{}_{}_{}_{}_r{}_{}_{}_lrs_{}_bsz_{}_steps_{}_epoch_{}_trial_{}'.format(
         args.method, args.model_name, args.backbone, args.dataset,
-        args.training_data_type, args.blend_ratio, args.n_concurrent_classes, int(args.imbalanced),
-        args.train_samples_ratio, args.test_samples_ratio, args.knn_samples_ratio,
+        args.training_data_type, args.blend_ratio, args.n_concurrent_classes,
+        im_ind, args.test_samples_per_cls, args.knn_samples,
         args.learning_rate_stream, args.batch_size,
         args.steps_per_batch_stream,
         args.epochs, args.trial)

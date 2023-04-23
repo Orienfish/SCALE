@@ -143,7 +143,7 @@ def tsne_simil(x, metric='euclidean', sigma=1.0):
 
 
 def cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch,
-                 logger, model_name, mode):
+                 logger):
     """Cluster and plot in evaluations"""
     num_classes = int(np.unique(test_labels).size * opt.k_scale)
 
@@ -158,7 +158,7 @@ def cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch,
         epoch, cur_step, time=kmeans_time, acc=kmeans_acc, purity=kmeans_purity))
     sys.stdout.flush()
 
-    if mode == TEST_MODE and model_name == STU_NAME and opt.plot:
+    if opt.plot:
         # plot t-SNE for test embeddings
         plot_tsne(test_embeddings, test_pred_labels, test_labels,
                   title='{} kmeans {}'.format(opt.criterion, kmeans_acc),
@@ -176,7 +176,7 @@ def cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch,
         epoch, cur_step, metric=metric, linkage='average', time=exec_time, acc=agg_acc, purity=agg_purity))
     sys.stdout.flush()
 
-    if mode == TEST_MODE and model_name == STU_NAME and opt.plot:
+    if opt.plot:
         # plot t-SNE for test embeddings
         plot_tsne(test_embeddings, test_pred_labels, test_labels,
                   title='{method} agg {metric} {linkage} {acc}'.format(method=opt.criterion, metric=metric,
@@ -196,34 +196,28 @@ def cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch,
         epoch, cur_step, metric=metric, time=spectral_time, acc=spectral_acc, purity=spectral_purity))
     sys.stdout.flush()
 
-    if mode == TEST_MODE and model_name == STU_NAME and opt.plot:
+    if opt.plot:
         # plot t-SNE for test embeddings
         plot_tsne(test_embeddings, test_pred_labels, test_labels,
                   title='{} spectral {} {}'.format(opt.criterion, metric, spectral_acc),
                   fig_name=os.path.join(opt.save_folder,
                                         'spectral_{}_{}_{}.png'.format(metric, epoch, cur_step)))
 
-    if mode == TEST_MODE:
-        logger.log_value('kmeans acc {}'.format(model_name), kmeans_acc, cur_step)
-        logger.log_value('kmeans purity {}'.format(model_name), kmeans_purity, cur_step)
-        logger.log_value('agg {metric} {linkage} acc {model_name}'.format(
-            metric=metric, linkage='average', model_name=model_name),
-            agg_acc, cur_step)
-        logger.log_value('agg {metric} {linkage} purity {model_name}'.format(
-            metric=metric, linkage='average', model_name=model_name),
-            agg_purity, cur_step)
-        logger.log_value('spectral {metric} acc {model_name}'.format(
-            metric=metric, model_name=model_name),
-            spectral_acc, cur_step)
-        logger.log_value('spectral {metric} purity {model_name}'.format(
-            metric=metric, model_name=model_name),
-            spectral_purity, cur_step)
+    logger.log_value('kmeans acc', kmeans_acc, cur_step)
+    logger.log_value('kmeans purity', kmeans_purity, cur_step)
+    logger.log_value('agg {metric} {linkage} acc'.format(
+        metric=metric, linkage='average'), agg_acc, cur_step)
+    logger.log_value('agg {metric} {linkage} purity'.format(
+        metric=metric, linkage='average'), agg_purity, cur_step)
+    logger.log_value('spectral {metric} acc'.format(
+        metric=metric), spectral_acc, cur_step)
+    logger.log_value('spectral {metric} purity'.format(
+        metric=metric), spectral_purity, cur_step)
 
-    if mode == TEST_MODE and model_name == STU_NAME:
-        with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
-            f.write('{epoch},{step},kmeans,{kmeans_acc},agg,{agg_acc},spectral,{spectral_acc},'.format(
-                epoch=epoch, step=cur_step, kmeans_acc=kmeans_acc, agg_acc=agg_acc, spectral_acc=spectral_acc
-            ))
+    with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
+        f.write('{epoch},{step},kmeans,{kmeans_acc},agg,{agg_acc},spectral,{spectral_acc},'.format(
+            epoch=epoch, step=cur_step, kmeans_acc=kmeans_acc, agg_acc=agg_acc, spectral_acc=spectral_acc
+        ))
 
 
 def eval_knn(test_embeddings, test_labels, knn_train_embeddings, knn_train_labels):
@@ -236,7 +230,7 @@ def eval_knn(test_embeddings, test_labels, knn_train_embeddings, knn_train_label
 
 
 def knn_eval(test_embeddings, test_labels, knn_train_embeddings, knn_train_labels,
-             opt, mem, cur_step, epoch, logger, model_name, mode):
+             opt, mem, cur_step, epoch, logger):
     """KNN classification and plot in evaluations"""
     # perform kNN classification
     from sklearn.neighbors import KNeighborsClassifier
@@ -250,21 +244,20 @@ def knn_eval(test_embeddings, test_labels, knn_train_embeddings, knn_train_label
         epoch, cur_step, time=knn_time, acc=knn_acc))
     sys.stdout.flush()
 
-    if mode == TEST_MODE and model_name == STU_NAME and opt.plot:
+    if opt.plot:
         # plot t-SNE for test embeddings
         plot_tsne(test_embeddings, pred_labels, test_labels,
                   title='{} knn {}'.format(opt.criterion, knn_acc),
                   fig_name=os.path.join(opt.save_folder, 'knn_{}_{}.png'.format(epoch, cur_step)))
 
-    logger.log_value('{}: knn acc {}'.format(mode, model_name), knn_acc, cur_step)
+    logger.log_value('knn acc', knn_acc, cur_step)
 
-    if mode == TEST_MODE and model_name == STU_NAME:
-        with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
-            f.write('{epoch},{step},knn,{knn_acc},\n'.format(epoch=epoch, step=cur_step, knn_acc=knn_acc))
+    with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
+        f.write('{epoch},{step},knn,{knn_acc},\n'.format(epoch=epoch, step=cur_step, knn_acc=knn_acc))
 
 
 def knn_task_eval(test_embeddings, test_labels, knn_train_embeddings, knn_train_labels,
-                  opt, mem, cur_step, epoch, logger, task_list, model_name):
+                  opt, mem, cur_step, epoch, logger, task_list):
     """KNN classification and plot in evaluations"""
 
     from sklearn.neighbors import KNeighborsClassifier
@@ -288,11 +281,10 @@ def knn_task_eval(test_embeddings, test_labels, knn_train_embeddings, knn_train_
         epoch, cur_step, time=knn_time, acc=knn_task_acc))
     sys.stdout.flush()
 
-    logger.log_value('knn task acc {}'.format(model_name), knn_task_acc, cur_step)
+    logger.log_value('knn task acc', knn_task_acc, cur_step)
 
-    if model_name == STU_NAME:
-        with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
-            f.write('knn_task,{knn_acc},\n'.format(knn_acc=knn_task_acc))
+    with open(os.path.join(opt.save_folder, 'result.txt'), 'a+') as f:
+        f.write('knn_task,{knn_acc},\n'.format(knn_acc=knn_task_acc))
 
 
 def eval_forget(acc_mat):

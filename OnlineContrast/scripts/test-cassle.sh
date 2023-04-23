@@ -1,8 +1,8 @@
 for trial in 0 1 2
 do
-  for dataset in cifar10 cifar100 tinyimagenet
+  for dataset in cifar10 # cifar100 tinyimagenet
   do
-    for datatype in seq-im seq iid seq-bl seq-cc
+    for datatype in seq-im # seq iid seq-bl seq-cc
     do
       for criterion in simclr
       do

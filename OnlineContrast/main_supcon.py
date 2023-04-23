@@ -25,7 +25,7 @@ except ImportError:
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../')
 from eval_utils import knn_eval, knn_task_eval, cluster_eval, plot_mem_select, \
-    plot_mem, save_model, TEST_MODE, VAL_MODE
+    plot_mem, save_model
 from data_utils import set_loader
 from set_utils import load_student_backbone, set_optimizer, set_constant_learning_rate
 
@@ -75,8 +75,7 @@ def parse_option():
     # model dataset
     parser.add_argument('--model', type=str, default='resnet50')
     parser.add_argument('--dataset', type=str, default='cifar10',
-                        choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet',
-                                 'stream51', 'core50', 'cub200', 'path'],
+                        choices=['cifar10', 'cifar100', 'mnist', 'tinyimagenet', 'path'],
                         help='dataset')
     parser.add_argument('--mean', type=str, help='mean of dataset in path in form of str tuple')
     parser.add_argument('--std', type=str, help='std of dataset in path in form of str tuple')
@@ -172,14 +171,18 @@ def parse_option():
     # for it in iterations:
     #     opt.lr_decay_epochs.append(int(it))
 
-    opt.model_name = '{}_{}_{}_{}_{}_{}_{}_{}_{}_r{}_{}_{}_lrs_{}_bsz_{}_mem_{}_{}_{}_{}_{}_temp_{}_' \
+    if len(opt.train_samples_per_cls) == 1:
+        im_ind = opt.train_samples_per_cls[0]
+    else:
+        im_ind = 'im'
+
+    opt.model_name = '{}_{}_{}_{}_{}_{}_{}_s{}_{}_{}_lrs_{}_bsz_{}_mem_{}_{}_{}_{}_{}_{}_temp_{}_' \
                      'simil_{}_{}_{}_distill_{}_{}_{}_steps_{}_epoch_{}_trial_{}'.format(
-        opt.lifelong_method, opt.criterion, opt.distill_method, opt.dataset, opt.model,
-        opt.training_data_type, opt.blend_ratio, opt.n_concurrent_classes, int(opt.imbalanced),
-        opt.train_samples_per_cls[0], opt.test_samples_per_cls, opt.knn_samples_ratio,
+        opt.lifelong_method, opt.criterion, opt.dataset, opt.model,
+        opt.training_data_type, opt.blend_ratio, opt.n_concurrent_classes,
+        im_ind, opt.test_samples_per_cls, opt.knn_samples,
         opt.learning_rate_stream, opt.batch_size, opt.mem_samples,
-        opt.mem_size, opt.mem_update_type, opt.mem_cluster_type,
-        int(opt.mem_w_labels),
+        opt.mem_size, opt.mem_max_classes, opt.mem_update_type, opt.mem_cluster_type, int(opt.mem_w_labels),
         opt.temp_cont, opt.simil, opt.temp_tSNE, opt.thres_ratio,
         opt.distill_power, opt.current_temp, opt.past_temp,
         opt.steps_per_batch_stream, opt.epochs, opt.trial)
@@ -299,7 +302,7 @@ def train_step(images, labels, models, criterions, optimizer,
 train_step.distill_power = 0.0
 
 
-def train(train_loader, test_loader, val_loader, knntrain_loader,
+def train(train_loader, test_loader, knntrain_loader,
           train_transform, model, criterions, optimizer, epoch,
           opt, mem, logger, task_list):
     """training of one epoch on single-pass of data"""
@@ -331,14 +334,14 @@ def train(train_loader, test_loader, val_loader, knntrain_loader,
 
         # test - plot t-SNE
         if idx % val_freq == 0:
-            validate(test_loader, val_loader, knntrain_loader, model, optimizer,
+            validate(test_loader, knntrain_loader, model, optimizer,
                      opt, mem, cur_stream_step, epoch, logger, task_list)
 
         # record a snapshot of the model as past model
         past_model = copy.deepcopy(model)
         past_model.eval()
         if opt.lifelong_method == 'cassle':
-            criterion, _, _ = criterions
+            criterion, _ = criterions
             criterion.freeze_backbone(model)
 
         models = [model, past_model]
@@ -405,7 +408,7 @@ def train(train_loader, test_loader, val_loader, knntrain_loader,
         end = time.time()
 
 
-def validate(test_loader, val_loader, knn_train_loader, model, optimizer,
+def validate(test_loader, knn_train_loader, model, optimizer,
              opt, mem, cur_step, epoch, logger, task_list):
     """validation, evaluate k-means clustering accuracy and plot t-SNE"""
     model.eval()
@@ -440,29 +443,11 @@ def validate(test_loader, val_loader, knn_train_loader, model, optimizer,
         test_labels += labels.detach().tolist()
     test_labels = np.array(test_labels).astype(int)
 
-    # Validation loader
-    for idx, (images, labels) in enumerate(tqdm(val_loader, desc='val')):
-        if torch.cuda.is_available():
-            images = images.cuda(non_blocking=True)
-            # labels = labels.cuda(non_blocking=True)
-
-        # forward prediction
-        embeddings = model(images).detach().cpu().numpy()
-        if val_embeddings is None:
-            val_embeddings = embeddings
-        else:
-            val_embeddings = np.concatenate((val_embeddings, embeddings), axis=0)
-        val_labels += labels.detach().tolist()
-    val_labels = np.array(val_labels).astype(int)
-
     # Unsupervised clustering
-    #cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch,
-    #             logger, model_name, TEST_MODE)
+    cluster_eval(test_embeddings, test_labels, opt, mem, cur_step, epoch, logger)
 
     # kNN classification
     knn_eval(test_embeddings, test_labels, knn_embeddings, knn_labels,
-             opt, mem, cur_step, epoch, logger)
-    knn_eval(val_embeddings, val_labels, knn_embeddings, knn_labels,
              opt, mem, cur_step, epoch, logger)
     # knn_task_eval(test_embeddings, test_labels, knn_embeddings, knn_labels,
     #              opt, mem, cur_step, epoch, logger, task_list, model_name)
@@ -494,7 +479,7 @@ def main():
     torch.manual_seed(opt.trial)
 
     # build data loader
-    train_loader, test_loader, val_loader, knntrain_loader, train_transform = set_loader(opt)
+    train_loader, test_loader, knntrain_loader, train_transform = set_loader(opt)
 
     # build model
     model = load_student_backbone(opt.model, opt.ckpt)
@@ -535,7 +520,7 @@ def main():
 
         # train for one epoch
         time1 = time.time()
-        train(train_loader, test_loader, val_loader, knntrain_loader,
+        train(train_loader, test_loader, knntrain_loader,
               train_transform, model, criterions, optimizer, epoch,
               opt, mem, logger, task_list)
         time2 = time.time()
@@ -545,7 +530,7 @@ def main():
         cur_stream_step = epoch * steps_per_epoch_stream
         opt.plot = True
         print('Test student model')
-        validate(test_loader, val_loader, knntrain_loader, model, optimizer, opt,
+        validate(test_loader, knntrain_loader, model, optimizer, opt,
                  mem, cur_stream_step, epoch, logger, task_list)
         opt.plot = False
 
