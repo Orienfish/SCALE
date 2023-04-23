@@ -8,9 +8,11 @@ Xiaofan Yu, Yunhui Guo, Sicun Gao, Tajana Rosing. "SCALE: Online Self-Supervised
 
 ## File Structure
 
-* `OnlineContrast` holds the implementation of our method SCALE, SimCLR and CaSSLe. The code is implemented based on [SupContrast](https://github.com/HobbitLong/SupContrast).
+* `OnlineContrast` holds the implementation of our method SCALE, SimCLR, SupCon, Co2L and CaSSLe. The code is implemented based on [SupContrast](https://github.com/HobbitLong/SupContrast).
 * `UCL` holds the implementation of LUMP, PNN, SI, DER adapted from the original repo [UCL](https://github.com/divyam3897/UCL).
 * `stam` holds the implementation of STAM adapted from the original repo [stam](https://github.com/CameronTaylorFL/stam).
+
+Dataset configuration for `OnlineContrast` and `UCL` is in `data_utils.py`. Model and training configuration is in `set_utils.py`. The shared evaluation functions are in `eval_utils.py`.
 
 ## Prerequisites
 
@@ -23,7 +25,7 @@ We mainly focus on image classification while the methodology can be applied to 
 For all methods in `OnlineContrast` and `UCL` folders, the shared root dataset directory is `datasets`. 
 
 * The download and configuration of MNIST, CIFAR-10, CIFAR-100 should be completed automatically by the code. 
-* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download [our subset](https://drive.google.com/file/d/13Ew7XGpMtKg6ODVXetogpUEtDvgTu8TM/view?usp=sharing) of 10 classes adapted from the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file into `OnlineContrast/datasets` and you should obtain a folder as `OnlineContrast/datasets/TINYIMG`.
+* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download [our subset](https://drive.google.com/file/d/13Ew7XGpMtKg6ODVXetogpUEtDvgTu8TM/view?usp=sharing) of 10 classes adapted from the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file into `datasets` and you should obtain a folder as `./datasets/TINYIMG`.
 
 For STAM, as written in the original [repo](https://github.com/CameronTaylorFL/stam), you need to download datasets from [here](https://drive.google.com/file/d/1CLohFBp-uKiP35O_NtGvl9nPxnqlzijz/view?usp=sharing) and unzip into the `./stam` directory as `./stam/datasets`.
 
@@ -33,7 +35,7 @@ We list the commands to fire our method and each baseline in the following lines
 
 ### OnlineContrast
 
-We adapt the code from the [SupContrast](https://github.com/HobbitLong/SupContrast) repo. To run our method SCALE:
+To run our method SCALE:
 
 ```bash
 cd OnlineContrast/scripts
@@ -56,8 +58,6 @@ We run LUMP (`mixup` in argument), PNN, SI and DER as baselines to compare:
 cd UCL
 bash ./run-baseline.sh <mixup/pnn/si/der> supcon <mnist/cifar10/cifar100/tinyimagenet> <iid/seq/seq-bl/seq-cc/seq-im> <trial#>
 ```
-
-The data streams and model configuration for LUMP, PNN, SI, DER are in `UCL/set_util.py`. In our setup, we fire the experiments with `UCL/test_all.sh`.
 
 ### STAM
 
@@ -114,7 +114,7 @@ The single-pass and non-iid data streams are the key motivation of the paper. As
 
   We consider the case that two classes are reveled concurrently.
 
-More implementation details can be found in `./set_util.py` in the `SeqSampler` class.
+More implementation details can be found in `./data_utils.py` in the `SeqSampler` class.
 
 ## Citation
 
