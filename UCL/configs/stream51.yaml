@@ -1,6 +1,6 @@
 name: stream51-exp
 datasetsetting:
-  name: seq-stream51
+  name: stream51
   image_size: 32
   num_workers: 4
 

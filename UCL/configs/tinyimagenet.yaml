@@ -1,6 +1,6 @@
-name: subimagenet-exp
+name: tinyimagenet-exp
 datasetsetting:
-  name: seq-tinyimagenet
+  name: tinyimagenet
   image_size: 32
   num_workers: 4
 

@@ -5,12 +5,35 @@ import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 
-from networks.resnet_big import ResNet, Bottleneck, BasicBlock, ConvEncoder
+from networks.resnet_big import ResNet, Bottleneck, BasicBlock
+from networks.resnet_pnn import resnet18_pnn
+from networks.resnet_big import ConvEncoder
+
+dataset_num_classes = {
+    'nabird': 555,
+    'oxford_pets': 37,
+    'cub200': 200,
+    'caltech101': 101,
+    'stanford_dogs': 120,
+    'voc2007': 21,
+    'cifar10': 10,
+    'cifar100': 20,
+    'imagenet': 1000,
+    'tinyimagenet': 100,  # temp setting
+    'stream51': 51,
+    'core50': 50,
+    'mnist': 10
+}
 
 def create_model(model_type: str,
+                 method: str,
+                 dataset: str,
                  **kwargs):
     if model_type == 'resnet18':
-        model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
+        if method == 'pnn':
+            model = resnet18_pnn(dataset_num_classes[dataset])
+        else:
+            model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     elif model_type == 'resnet34':
         model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     elif model_type == 'resnet50':
@@ -26,13 +49,15 @@ def create_model(model_type: str,
 
 
 def load_student_backbone(model_type: str,
+                          method: str,
+                          dataset: str,
                           ckpt: str,
                           **kwargs):
     """
     Load student model of model_type and pretrained weights from ckpt.
     """
     # Set models
-    model = create_model(model_type, **kwargs)
+    model = create_model(model_type, method, dataset, **kwargs)
 
     model = torch.nn.DataParallel(model)
 

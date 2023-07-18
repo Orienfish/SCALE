@@ -1,6 +1,6 @@
 name: cifar100-exp
 datasetsetting:
-  name: seq-cifar100
+  name: cifar100
   image_size: 32
   num_workers: 4
 

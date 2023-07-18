@@ -1,6 +1,6 @@
 name: core50-exp
 datasetsetting:
-  name: seq-core50
+  name: core50
   image_size: 32
   num_workers: 4
 

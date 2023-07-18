@@ -482,7 +482,10 @@ def main():
     train_loader, test_loader, knntrain_loader, train_transform = set_loader(opt)
 
     # build model
-    model = load_student_backbone(opt.model, opt.ckpt)
+    model = load_student_backbone(opt.model,
+                                  opt.lifelong_method,
+                                  opt.dataset,
+                                  opt.ckpt)
 
     # build criterion
     criterion, criterion_reg = get_loss(opt)

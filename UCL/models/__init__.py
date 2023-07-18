@@ -12,15 +12,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../../')
 from set_utils import load_student_backbone
 
-def get_backbone(backbone, dataset, ckpt=None, castrate=True):
+def get_backbone(backbone, method, dataset,
+                 ckpt=None, castrate=True):
     # backbone_obj = eval(f"{backbone}()")
-    backbone_obj = load_student_backbone(backbone, ckpt)
-    if dataset == 'seq-cifar100':
-        backbone_obj.n_classes = 100
-    elif dataset == 'seq-cifar10':
-        backbone_obj.n_classes = 10
-    elif dataset == 'seq-tinyimagenet':
-        backbone_obj.n_classes = 10
+    backbone_obj = load_student_backbone(backbone,
+                                         method,
+                                         dataset,
+                                         ckpt)
 
     if backbone == 'cnn':
         backbone_obj.output_dim = 64
@@ -42,6 +40,7 @@ def get_model(args, device, len_train_loader, transform):
     loss = torch.nn.CrossEntropyLoss()
     if args.model_name == 'simsiam':
         backbone = SimSiam(get_backbone(args.backbone,
+                                        args.method,
                                         args.datasetsetting.name,
                                         args.ckpt,
                                         args.cl_default)).to(device)
@@ -49,6 +48,7 @@ def get_model(args, device, len_train_loader, transform):
             backbone.projector.set_layers(args.model.proj_layers)
     elif args.model_name == 'barlowtwins':
         backbone = BarlowTwins(get_backbone(args.backbone,
+                                            args.method,
                                             args.datasetsetting.name,
                                             args.ckpt,
                                             args.cl_default
@@ -61,6 +61,7 @@ def get_model(args, device, len_train_loader, transform):
         else:
             head = 'mlp'
         backbone = SupCon(get_backbone(args.backbone,
+                                       args.method,
                                        args.datasetsetting.name,
                                        args.ckpt,
                                        args.cl_default,
@@ -71,11 +72,13 @@ def get_model(args, device, len_train_loader, transform):
         #    backbone.projector.set_layers(args.model.proj_layers)
     elif args.model_name == 'vicreg':
         backbone = VICReg(get_backbone(args.backbone,
+                                       args.method,
                                        args.datasetsetting.name,
                                        args.ckpt,
                                        args.cl_default)).to(device)
     elif args.model_name == 'byol':
         backbone = BYOL(get_backbone(args.backbone,
+                                     args.method,
                                      args.datasetsetting.name,
                                      args.ckpt,
                                      args.cl_default), device).to(device)
@@ -89,4 +92,3 @@ def get_model(args, device, len_train_loader, transform):
         names[model] = getattr(mod, class_name)
 
     return names[args.method](backbone, loss, args, len_train_loader, transform)
-
