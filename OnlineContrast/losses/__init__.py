@@ -7,7 +7,7 @@ def get_loss(opt):
         criterion = SimCLRLoss(model=opt.model,
                                lifelong_method=opt.lifelong_method,
                                temperature=opt.temp_cont)
-    elif opt.criterion == 'supcon':
+    elif opt.criterion == 'supcon' or opt.criterion == 'scale':
         criterion = SupConLoss(stream_bsz=opt.batch_size,
                                model=opt.model,
                                temperature=opt.temp_cont)
