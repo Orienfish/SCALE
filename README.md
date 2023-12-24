@@ -20,12 +20,12 @@ In each folder, set up the environment with `pip3 install -r requirements.txt`. 
 
 ### Dataset Preparation
 
-We mainly focus on image classification while the methodology can be applied to more general scenarios. In this repo, we test with MNIST (10 classes), CIFAR-10 (classes), CIFAR-100 (20 coarse classes) and SubImageNet (10 classes). 
+We mainly focus on image classification while the methodology can be applied to more general scenarios. In this repo, we test with MNIST (10 classes), CIFAR-10 (classes), CIFAR-100 (20 coarse classes) and SubImageNet (10 classes).
 
-For all methods in `OnlineContrast` and `UCL` folders, the shared root dataset directory is `datasets`. 
+For all methods in `OnlineContrast` and `UCL` folders, the shared root dataset directory is `datasets`.
 
-* The download and configuration of MNIST, CIFAR-10, CIFAR-100 should be completed automatically by the code. 
-* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download [our subset](https://drive.google.com/file/d/13Ew7XGpMtKg6ODVXetogpUEtDvgTu8TM/view?usp=sharing) of 10 classes adapted from the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file into `datasets` and you should obtain a folder as `./datasets/TINYIMG`.
+* The download and configuration of MNIST, CIFAR-10, CIFAR-100 should be completed automatically by the code.
+* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file into `datasets` and you should obtain a folder as `./datasets/TINYIMG`.
 
 For STAM, as written in the original [repo](https://github.com/CameronTaylorFL/stam), you need to download datasets from [here](https://drive.google.com/file/d/1CLohFBp-uKiP35O_NtGvl9nPxnqlzijz/view?usp=sharing) and unzip into the `./stam` directory as `./stam/datasets`.
 
