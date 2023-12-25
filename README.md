@@ -25,7 +25,7 @@ We mainly focus on image classification while the methodology can be applied to 
 For all methods in `OnlineContrast` and `UCL` folders, the shared root dataset directory is `datasets`.
 
 * The download and configuration of MNIST, CIFAR-10, CIFAR-100 should be completed automatically by the code.
-* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file into `datasets` and you should obtain a folder as `./datasets/TINYIMG`.
+* For SubImageNet, sometimes the download cannot proceed normaly. If that is the case, please download the original [TinyImageNet](https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view). Unzip the file under `./datasets/TINYIMG`.
 
 For STAM, as written in the original [repo](https://github.com/CameronTaylorFL/stam), you need to download datasets from [here](https://drive.google.com/file/d/1CLohFBp-uKiP35O_NtGvl9nPxnqlzijz/view?usp=sharing) and unzip into the `./stam` directory as `./stam/datasets`.
 
